@@ -1,19 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+  const app = await NestFactory.create(AppModule);
+
+  app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
-      urls: ['amqp://admin:123456@localhost:5672'],
+      urls: ['amqp://admin:123456@localhost'],
       queue: 'notification',
-      queueOptions: { durable: true },
+      noAck: false,
+      queueOptions: {
+        durable: true,
+      },
     },
   });
 
-  await app.listen();
-  console.log('Notification service is running');
+  await app.startAllMicroservices();
+  await app.listen(3001);
 }
-
 bootstrap();
